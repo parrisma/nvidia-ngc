@@ -1,0 +1,36 @@
+#
+# Nvidia Pytroch base image for JetPack 4.4
+#
+# sudo docker run -it --rm --runtime nvidia --network host
+#
+FROM nvcr.io/nvidia/l4t-pytorch:r32.6.1-pth1.9-py3
+
+RUN apt-get update && apt-get install -y lsb-release && apt-get clean all
+RUN apt-get install -y apt-utils
+
+# basic file editor.
+RUN apt install -y vim
+
+# Need sudo if inside the container as devuser
+RUN apt-get install -y sudo
+
+# Create devuser and set password and groups 
+
+RUN groupadd -g 31415 pydev
+
+RUN useradd devuser -m && usermod --shell /bin/bash devuser && usermod -aG sudo devuser && \
+    echo "devuser\ndevuser" | passwd devuser && \
+    echo "root\nroot" | passwd root
+
+RUN usermod -a -G pydev devuser 
+
+# create default rc and set home dir basics
+RUN echo 'cd ~' >> /home/devuser/.bashrc
+
+RUN chown -R devuser:pydev /home/devuser
+
+RUN usermod -g pydev devuser
+RUN chmod g+s /home/devuser
+
+USER devuser
+
